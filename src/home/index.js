@@ -3,25 +3,42 @@ import { Card, Col, Row, Button, message, Upload } from 'antd';
 import InvoiceForm from './components/invoiceForm';
 import BlForm from './components/invoiceForm/blForm';
 import Custom from './components/invoiceForm/custom';
+import reqwest from 'reqwest';
 import './index.scss';
 
 function getBase64(img, callback) {
 	const reader = new FileReader();
 	reader.addEventListener('load', () => callback(reader.result));
 	reader.readAsDataURL(img);
-  }
-  
-  function beforeUpload(file) {
+}
+
+function beforeUpload(file) {
 	const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
 	if (!isJpgOrPng) {
-	  message.error('You can only upload JPG/PNG file!');
+		message.error('You can only upload JPG/PNG file!');
 	}
 	const isLt2M = file.size / 1024 / 1024 < 2;
 	if (!isLt2M) {
-	  message.error('Image must smaller than 2MB!');
+		message.error('Image must smaller than 2MB!');
 	}
-	return isJpgOrPng && isLt2M;
-  }
+	console.log(file);
+    const formData = new FormData();
+	formData.append('file', file);
+	reqwest({
+		url: 'http://1.116.37.178:8090/api/ie',
+		method: 'post',
+		processData: false,
+		data: formData,
+		success: () => {
+		  
+		  message.success('upload successfully.');
+		},
+		error: () => {
+			
+		  message.error('upload failed.');
+		},
+	  });
+}
 export default class Home extends Component {
 	constructor(props) {
 		super(props);
@@ -62,19 +79,19 @@ export default class Home extends Component {
 
 	handleChange = info => {
 		if (info.file.status === 'uploading') {
-		  this.setState({ loading: true });
-		  return;
+			this.setState({ loading: true });
+			return;
 		}
 		if (info.file.status === 'done') {
-		  // Get this url from response in real world.
-		  getBase64(info.file.originFileObj, imageUrl =>
-			this.setState({
-			  imageUrl,
-			  loading: false,
-			}),
-		  );
+			// Get this url from response in real world.
+			getBase64(info.file.originFileObj, imageUrl =>
+				this.setState({
+					imageUrl,
+					loading: false,
+				}),
+			);
 		}
-	  };
+	};
 
 	render() {
 		let _this = this;
@@ -85,8 +102,8 @@ export default class Home extends Component {
 			return <div key={index} onClick={this.tabChoiced.bind(_this, res.id)} className={`${"btn"} ${this.state.focusItem === res.id ? "active" : null}`}>{res.tabName}</div>;
 		});
 
-		
-		  const { imageUrl } = this.state;
+
+		const { imageUrl } = this.state;
 
 		const uploadButton = (
 			<div>
@@ -106,13 +123,12 @@ export default class Home extends Component {
 
 						<Col span={12}>
 							<Upload
-								 name="avatar"
-								 listType="picture-card"
-								 className="avatar-uploader"
-								 showUploadList={false}
-								 action="http://1.116.37.178:8090/api/ie"
-								 beforeUpload={beforeUpload}
-								 onChange={this.handleChange}
+								name="avatar"
+								listType="picture-card"
+								className="avatar-uploader"
+								showUploadList={false}
+								beforeUpload={beforeUpload}
+								onChange={this.handleChange}
 							>
 								{imageUrl ? (
 									<img
